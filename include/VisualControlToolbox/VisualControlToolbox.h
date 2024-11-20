@@ -77,14 +77,75 @@ typedef struct parameters {
         patchSize,
         fastThreshold);
     }
-    void initArucos(int dict = cv::aruco::DICT_6X6_250)
+    void initArucos(const ros::NodeHandle &nh,
+                    int dict = cv::aruco::DICT_6X6_250)
     {
         parameters = cv::aruco::DetectorParameters::create();
         dictionary = cv::aruco::getPredefinedDictionary(dict);
-        parameters->adaptiveThreshWinSizeMin = 141;  // default 3
-        parameters->adaptiveThreshWinSizeMax = 251;  // default 23
-        parameters->adaptiveThreshWinSizeStep = 20;  // default 10
-        parameters->adaptiveThreshConstant = 4 ;     // default 7
+        // parameters->adaptiveThreshWinSizeMin = 141;  // default 3
+        // parameters->adaptiveThreshWinSizeMax = 251;  // default 23
+        // parameters->adaptiveThreshWinSizeStep = 20;  // default 10
+        // parameters->adaptiveThreshConstant = 4 ;     // default 7
+        if(nh.hasParam("adaptiveThreshWinSizeMin"))
+            nh.getParam("adaptiveThreshWinSizeMin", parameters->adaptiveThreshWinSizeMin);
+        if(nh.hasParam("adaptiveThreshWinSizeMax"))
+            nh.getParam("adaptiveThreshWinSizeMax", parameters->adaptiveThreshWinSizeMax);
+        if(nh.hasParam("adaptiveThreshWinSizeStep"))
+            nh.getParam("adaptiveThreshWinSizeStep", parameters->adaptiveThreshWinSizeStep);
+        if(nh.hasParam("adaptiveThreshConstant"))
+            nh.getParam("adaptiveThreshConstant", parameters->adaptiveThreshConstant);
+        if(nh.hasParam("minMarkerPerimeterRate"))
+            nh.getParam("minMarkerPerimeterRate", parameters->minMarkerPerimeterRate);
+        if(nh.hasParam("maxMarkerPerimeterRate"))
+            nh.getParam("maxMarkerPerimeterRate", parameters->maxMarkerPerimeterRate);
+        if(nh.hasParam("polygonalApproxAccuracyRate"))
+            nh.getParam("polygonalApproxAccuracyRate", parameters->polygonalApproxAccuracyRate);
+        if(nh.hasParam("minCornerDistanceRate"))
+            nh.getParam("minCornerDistanceRate", parameters->minCornerDistanceRate);
+        if(nh.hasParam("minDistanceToBorder"))
+            nh.getParam("minDistanceToBorder", parameters->minDistanceToBorder);
+        if(nh.hasParam("minMarkerDistanceRate"))
+            nh.getParam("minMarkerDistanceRate", parameters->minMarkerDistanceRate);
+        if(nh.hasParam("cornerRefinementMethod"))
+            nh.getParam("cornerRefinementMethod", parameters->cornerRefinementMethod);
+        if(nh.hasParam("cornerRefinementWinSize"))
+            nh.getParam("cornerRefinementWinSize", parameters->cornerRefinementWinSize);
+        if(nh.hasParam("cornerRefinementMaxIterations"))
+            nh.getParam("cornerRefinementMaxIterations", parameters->cornerRefinementMaxIterations);
+        if(nh.hasParam("cornerRefinementMinAccuracy"))
+            nh.getParam("cornerRefinementMinAccuracy", parameters->cornerRefinementMinAccuracy);
+        if(nh.hasParam("markerBorderBits"))
+            nh.getParam("markerBorderBits", parameters->markerBorderBits);
+        if(nh.hasParam("perspectiveRemovePixelPerCell"))
+            nh.getParam("perspectiveRemovePixelPerCell", parameters->perspectiveRemovePixelPerCell);
+        if(nh.hasParam("perspectiveRemoveIgnoredMarginPerCell"))
+            nh.getParam("perspectiveRemoveIgnoredMarginPerCell", parameters->perspectiveRemoveIgnoredMarginPerCell);
+        if(nh.hasParam("maxErroneousBitsInBorderRate"))
+            nh.getParam("maxErroneousBitsInBorderRate", parameters->maxErroneousBitsInBorderRate);
+        if(nh.hasParam("minOtsuStdDev"))
+            nh.getParam("minOtsuStdDev", parameters->minOtsuStdDev);
+        if(nh.hasParam("errorCorrectionRate"))
+            nh.getParam("errorCorrectionRate", parameters->errorCorrectionRate);
+        if(nh.hasParam("aprilTagMinClusterPixels"))
+            nh.getParam("aprilTagMinClusterPixels", parameters->aprilTagMinClusterPixels);
+        if(nh.hasParam("aprilTagMaxNmaxima"))
+            nh.getParam("aprilTagMaxNmaxima", parameters->aprilTagMaxNmaxima);
+        if(nh.hasParam("aprilTagCriticalRad"))
+            nh.getParam("aprilTagCriticalRad", parameters->aprilTagCriticalRad);
+        if(nh.hasParam("aprilTagMaxLineFitMse"))
+            nh.getParam("aprilTagMaxLineFitMse", parameters->aprilTagMaxLineFitMse);
+        if(nh.hasParam("aprilTagMinWhiteBlackDiff"))
+            nh.getParam("aprilTagMinWhiteBlackDiff", parameters->aprilTagMinWhiteBlackDiff);
+        if(nh.hasParam("aprilTagDeglitch"))
+            nh.getParam("aprilTagDeglitch", parameters->aprilTagDeglitch);
+        if(nh.hasParam("aprilTagQuadDecimate"))
+            nh.getParam("aprilTagQuadDecimate", parameters->aprilTagQuadDecimate);
+        if(nh.hasParam("aprilTagQuadSigma"))
+            nh.getParam("aprilTagQuadSigma", parameters->aprilTagQuadSigma);
+        if(nh.hasParam("detectInvertedMarker"))
+            nh.getParam("detectInvertedMarker", parameters->detectInvertedMarker);
+
+
     }
 
 } parameters;
@@ -244,7 +305,7 @@ int find(int q, std::vector<int> vec)
 //      desired_configuration = información de referencia
 //  OUTPUT:
 //      result = resultados
-int compute_arcuos(
+int compute_arucos(
     const cv::Mat&img,
     const parameters & params,
     const desired_configuration & Desired_Configuration,
@@ -965,7 +1026,7 @@ typedef int (*prepList) (const cv::Mat&img,
 const prepList preprocessors[] = {
     &compute_homography,
     &compute_descriptors,
-    & compute_arcuos
+    & compute_arucos
 };
 }// vct namespace
 #endif //   VCT_H
