@@ -1,0 +1,14 @@
+ 
+diff --git a/script/get_arch.py b/script/get_arch.py
+index 658216e..fb79e89 100755
+--- a/script/get_arch.py
++++ b/script/get_arch.py
+@@ -9,7 +9,7 @@ from __future__ import print_function
+ import subprocess
+
+ try:
+-  arch = subprocess.check_output(["gcc", "-dumpmachine"]).strip().split("-")[0]
++  arch = subprocess.check_output(["gcc", "-dumpmachine"]).decode().strip().split("-")[0]
+   if arch in ["aarch64", "arm64"]:
+     o = "aarch64"
+   elif arch in ["x86_64", "amd64"]:

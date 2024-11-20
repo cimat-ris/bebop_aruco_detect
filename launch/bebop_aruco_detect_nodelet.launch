@@ -1,0 +1,50 @@
+
+<!-- This file launches drone driver and visual servoing nodelets
+You have can then make the drone take off or land by publishing corresponding messages :
+
+"rostopic pub -\-once /bebop/takeoff std_msgs/Empty" for takeoff
+"rostopic pub -\-once /bebop/land std_msgs/Empty" for landing
+(without "\")
+-->
+
+<launch>
+  <arg name="namespace_bebop" default="bebop" />
+  <arg name="ip" default="192.168.42.1" />
+  <arg name="verbose" default="false" />
+  <arg name="reference" default="$(find bebop_aruco_detect)/config/reference.png" />
+  <arg name="output" default="$(find bebop_aruco_detect)/output/data.dat" />
+
+  <!-- Parameters for the drone -->
+  <param name="/$(arg namespace_bebop)/bebop_nodelet/SpeedSettingsOutdoorOutdoor" type="int" value="0"/>
+  <!--<param name="/$(arg namespace_bebop)/bebop_nodelet/publish_odom_tf" type="int" value="1"/>-->
+  <param name="/$(arg namespace_bebop)/bebop_nodelet/PictureSettingsVideoResolutionsType" type="int" value="0"/>
+  <param name="/$(arg namespace_bebop)/bebop_nodelet/PictureSettingsVideoStabilizationModeMode" type="int" value="3"/>
+
+  <!-- Nodelet launch file from bebop_driver -->
+  <include file="$(find bebop_driver)/launch/bebop_nodelet.launch">
+    <arg name="namespace" value="$(arg namespace_bebop)" />
+    <arg name="ip" value="$(arg ip)" />
+    <arg name="drone_type" default="bebop2" />
+  </include>
+
+
+  <!-- ArUco detection -->
+  <group ns="demo">
+    <param name="select" type="int" value="1"/>
+    <param name="verbose" type="bool" value="$(arg verbose)"/>
+    <param name="reference" value="$(arg reference)"/>
+    <param name="output" value="$(arg output)"/>
+    <rosparam command="load" file="$(find bebop_aruco_detect)/config/IBVS.yaml"/>
+    <node pkg="nodelet"
+          type="nodelet"
+          name="bebop_aruco_detect_nodelet"
+          args="load bebop_aruco_detect_nodelet /$(arg namespace_bebop)/bebop_nodelet_manager">
+      <remap from="cmd_vel" to="/$(arg namespace_bebop)/cmd_vel"/>
+      <remap from="image_raw" to="/$(arg namespace_bebop)/image_raw"/>
+      <remap from="odom" to="/$(arg namespace_bebop)/odom"/>
+      <remap from="land" to="/$(arg namespace_bebop)/land"/>
+      <remap from="takeoff" to="/$(arg namespace_bebop)/takeoff"/>
+    </node>
+  </group>
+
+</launch>
