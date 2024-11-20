@@ -77,72 +77,136 @@ typedef struct parameters {
         patchSize,
         fastThreshold);
     }
-    void initArucos(const ros::NodeHandle &nh,
-                    int dict = cv::aruco::DICT_6X6_250)
+    void initArucos(const ros::NodeHandle &nh)
     {
-        parameters = cv::aruco::DetectorParameters::create();
+        //  Dictionary selection
+
+        int dict=cv::aruco::DICT_6X6_250;
+        if(nh.hasParam("dictionary"))
+        {
+            std::string dict_str;
+            nh.getParam("dictionary", dict_str);
+            if(dict_str == std::string("4X4_50"))
+                dict = cv::aruco::DICT_4X4_50;
+            else if(dict_str == std::string("4X4_100 "))
+                dict = cv::aruco::DICT_4X4_100 ;
+            else if(dict_str == std::string("4X4_250 "))
+                dict = cv::aruco::DICT_4X4_250 ;
+            else if(dict_str == std::string("4X4_1000 "))
+                dict = cv::aruco::DICT_4X4_1000 ;
+            else if(dict_str == std::string("5X5_50 "))
+                dict = cv::aruco::DICT_5X5_50 ;
+            else if(dict_str == std::string("5X5_100 "))
+                dict = cv::aruco::DICT_5X5_100 ;
+            else if(dict_str == std::string("5X5_250 "))
+                dict = cv::aruco::DICT_5X5_250 ;
+            else if(dict_str == std::string("5X5_1000 "))
+                dict = cv::aruco::DICT_5X5_1000 ;
+            else if(dict_str == std::string("6X6_50 "))
+                dict = cv::aruco::DICT_6X6_50 ;
+            else if(dict_str == std::string("6X6_100 "))
+                dict = cv::aruco::DICT_6X6_100 ;
+            else if(dict_str == std::string("6X6_250 "))
+                dict = cv::aruco::DICT_6X6_250 ;
+            else if(dict_str == std::string("6X6_1000 "))
+                dict = cv::aruco::DICT_6X6_1000 ;
+            else if(dict_str == std::string("7X7_50 "))
+                dict = cv::aruco::DICT_7X7_50 ;
+            else if(dict_str == std::string("7X7_100 "))
+                dict = cv::aruco::DICT_7X7_100 ;
+            else if(dict_str == std::string("7X7_250 "))
+                dict = cv::aruco::DICT_7X7_250 ;
+            else if(dict_str == std::string("7X7_1000 "))
+                dict = cv::aruco::DICT_7X7_1000 ;
+            else if(dict_str == std::string("ARUCO_ORIGINAL "))
+                dict = cv::aruco::DICT_ARUCO_ORIGINAL ;
+            else if(dict_str == std::string("APRILTAG_16h5 "))
+                dict = cv::aruco::DICT_APRILTAG_16h5 ;
+            else if(dict_str == std::string("APRILTAG_25h9 "))
+                dict = cv::aruco::DICT_APRILTAG_25h9 ;
+            else if(dict_str == std::string("APRILTAG_36h10 "))
+                dict = cv::aruco::DICT_APRILTAG_36h10 ;
+            else if(dict_str == std::string("APRILTAG_36h11 "))
+                dict = cv::aruco::DICT_APRILTAG_36h11 ;
+            // if(dict_str == std::string("ARUCO_MIP_36h12"))
+            //     dict = cv::aruco::DICT_ARUCO_MIP_36h12;
+            else
+                ROS_WARN("Incorrect ArUco Dictionary Selection");
+        }
         dictionary = cv::aruco::getPredefinedDictionary(dict);
-        // parameters->adaptiveThreshWinSizeMin = 141;  // default 3
-        // parameters->adaptiveThreshWinSizeMax = 251;  // default 23
-        // parameters->adaptiveThreshWinSizeStep = 20;  // default 10
-        // parameters->adaptiveThreshConstant = 4 ;     // default 7
+
+        //  Detection parameters
+        parameters = cv::aruco::DetectorParameters::create();
         if(nh.hasParam("adaptiveThreshWinSizeMin"))
             nh.getParam("adaptiveThreshWinSizeMin", parameters->adaptiveThreshWinSizeMin);
-        if(nh.hasParam("adaptiveThreshWinSizeMax"))
+        else if(nh.hasParam("adaptiveThreshWinSizeMax"))
             nh.getParam("adaptiveThreshWinSizeMax", parameters->adaptiveThreshWinSizeMax);
-        if(nh.hasParam("adaptiveThreshWinSizeStep"))
+        else if(nh.hasParam("adaptiveThreshWinSizeStep"))
             nh.getParam("adaptiveThreshWinSizeStep", parameters->adaptiveThreshWinSizeStep);
-        if(nh.hasParam("adaptiveThreshConstant"))
+        else if(nh.hasParam("adaptiveThreshConstant"))
             nh.getParam("adaptiveThreshConstant", parameters->adaptiveThreshConstant);
-        if(nh.hasParam("minMarkerPerimeterRate"))
+        else if(nh.hasParam("minMarkerPerimeterRate"))
             nh.getParam("minMarkerPerimeterRate", parameters->minMarkerPerimeterRate);
-        if(nh.hasParam("maxMarkerPerimeterRate"))
+        else if(nh.hasParam("maxMarkerPerimeterRate"))
             nh.getParam("maxMarkerPerimeterRate", parameters->maxMarkerPerimeterRate);
-        if(nh.hasParam("polygonalApproxAccuracyRate"))
+        else if(nh.hasParam("polygonalApproxAccuracyRate"))
             nh.getParam("polygonalApproxAccuracyRate", parameters->polygonalApproxAccuracyRate);
-        if(nh.hasParam("minCornerDistanceRate"))
+        else if(nh.hasParam("minCornerDistanceRate"))
             nh.getParam("minCornerDistanceRate", parameters->minCornerDistanceRate);
-        if(nh.hasParam("minDistanceToBorder"))
+        else if(nh.hasParam("minDistanceToBorder"))
             nh.getParam("minDistanceToBorder", parameters->minDistanceToBorder);
-        if(nh.hasParam("minMarkerDistanceRate"))
+        else if(nh.hasParam("minMarkerDistanceRate"))
             nh.getParam("minMarkerDistanceRate", parameters->minMarkerDistanceRate);
-        if(nh.hasParam("cornerRefinementMethod"))
-            nh.getParam("cornerRefinementMethod", parameters->cornerRefinementMethod);
-        if(nh.hasParam("cornerRefinementWinSize"))
+        else if(nh.hasParam("cornerRefinementMethod"))
+        {
+            std::string method;
+            nh.getParam("cornerRefinementMethod", method);
+            if (method == std::string("CORNER_REFINE_NONE"))
+                parameters->cornerRefinementMethod = cv::aruco::CORNER_REFINE_NONE;
+            else if (method == std::string("CORNER_REFINE_SUBPIX"))
+                parameters->cornerRefinementMethod = cv::aruco::CORNER_REFINE_SUBPIX;
+            else if (method == std::string("CORNER_REFINE_CONTOUR"))
+                parameters->cornerRefinementMethod = cv::aruco::CORNER_REFINE_CONTOUR;
+            else if (method == std::string("CORNER_REFINE_APRILTAG"))
+                parameters->cornerRefinementMethod = cv::aruco::CORNER_REFINE_APRILTAG;
+            ROS_INFO("[BEBOP2 ARUCO] Corner refinement method changed: %s", method.c_str());
+
+        }
+        else if(nh.hasParam("cornerRefinementWinSize"))
             nh.getParam("cornerRefinementWinSize", parameters->cornerRefinementWinSize);
-        if(nh.hasParam("cornerRefinementMaxIterations"))
+        else if(nh.hasParam("cornerRefinementMaxIterations"))
             nh.getParam("cornerRefinementMaxIterations", parameters->cornerRefinementMaxIterations);
-        if(nh.hasParam("cornerRefinementMinAccuracy"))
+        else if(nh.hasParam("cornerRefinementMinAccuracy"))
             nh.getParam("cornerRefinementMinAccuracy", parameters->cornerRefinementMinAccuracy);
-        if(nh.hasParam("markerBorderBits"))
+        else if(nh.hasParam("markerBorderBits"))
             nh.getParam("markerBorderBits", parameters->markerBorderBits);
-        if(nh.hasParam("perspectiveRemovePixelPerCell"))
+        else if(nh.hasParam("perspectiveRemovePixelPerCell"))
             nh.getParam("perspectiveRemovePixelPerCell", parameters->perspectiveRemovePixelPerCell);
-        if(nh.hasParam("perspectiveRemoveIgnoredMarginPerCell"))
+        else if(nh.hasParam("perspectiveRemoveIgnoredMarginPerCell"))
             nh.getParam("perspectiveRemoveIgnoredMarginPerCell", parameters->perspectiveRemoveIgnoredMarginPerCell);
-        if(nh.hasParam("maxErroneousBitsInBorderRate"))
+        else if(nh.hasParam("maxErroneousBitsInBorderRate"))
             nh.getParam("maxErroneousBitsInBorderRate", parameters->maxErroneousBitsInBorderRate);
-        if(nh.hasParam("minOtsuStdDev"))
+        else if(nh.hasParam("minOtsuStdDev"))
             nh.getParam("minOtsuStdDev", parameters->minOtsuStdDev);
-        if(nh.hasParam("errorCorrectionRate"))
+        else if(nh.hasParam("errorCorrectionRate"))
             nh.getParam("errorCorrectionRate", parameters->errorCorrectionRate);
-        if(nh.hasParam("aprilTagMinClusterPixels"))
+        else if(nh.hasParam("aprilTagMinClusterPixels"))
             nh.getParam("aprilTagMinClusterPixels", parameters->aprilTagMinClusterPixels);
-        if(nh.hasParam("aprilTagMaxNmaxima"))
+        else if(nh.hasParam("aprilTagMaxNmaxima"))
             nh.getParam("aprilTagMaxNmaxima", parameters->aprilTagMaxNmaxima);
-        if(nh.hasParam("aprilTagCriticalRad"))
+        else if(nh.hasParam("aprilTagCriticalRad"))
             nh.getParam("aprilTagCriticalRad", parameters->aprilTagCriticalRad);
-        if(nh.hasParam("aprilTagMaxLineFitMse"))
+        else if(nh.hasParam("aprilTagMaxLineFitMse"))
             nh.getParam("aprilTagMaxLineFitMse", parameters->aprilTagMaxLineFitMse);
-        if(nh.hasParam("aprilTagMinWhiteBlackDiff"))
+        else if(nh.hasParam("aprilTagMinWhiteBlackDiff"))
             nh.getParam("aprilTagMinWhiteBlackDiff", parameters->aprilTagMinWhiteBlackDiff);
-        if(nh.hasParam("aprilTagDeglitch"))
+        else if(nh.hasParam("aprilTagDeglitch"))
             nh.getParam("aprilTagDeglitch", parameters->aprilTagDeglitch);
-        if(nh.hasParam("aprilTagQuadDecimate"))
+        else if(nh.hasParam("aprilTagQuadDecimate"))
             nh.getParam("aprilTagQuadDecimate", parameters->aprilTagQuadDecimate);
-        if(nh.hasParam("aprilTagQuadSigma"))
+        else if(nh.hasParam("aprilTagQuadSigma"))
             nh.getParam("aprilTagQuadSigma", parameters->aprilTagQuadSigma);
-        if(nh.hasParam("detectInvertedMarker"))
+        else if(nh.hasParam("detectInvertedMarker"))
             nh.getParam("detectInvertedMarker", parameters->detectInvertedMarker);
 
 

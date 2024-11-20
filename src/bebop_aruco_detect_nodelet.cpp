@@ -50,7 +50,7 @@ private:
   // Image proessing parameters
   vct::parameters params;
   //  Desired configuration
-  vct::desired_configuration Desired_Configuration;
+  // vct::desired_configuration Desired_Configuration;
 // Result of the matching operation
 
   //  configs
@@ -80,10 +80,11 @@ void bebopVSNodelet::onInit()
 
   //  CONFIGS
   verbose = m_nh.param(std::string("verbose"), false);
+  params.initArucos(m_nh);
   // params.initArucos(m_nh, cv::aruco::DICT_6X6_250);
   // params.initArucos(m_nh, cv::aruco::DICT_4X4_250);
   // params.initArucos(m_nh, cv::aruco::DICT_7X7_250);
-  params.initArucos(m_nh, cv::aruco::DICT_APRILTAG_36h11 );
+  // params.initArucos(m_nh, cv::aruco::DICT_APRILTAG_36h11 );
 
   m_subImg   = m_nh.subscribe( "image_raw", 100, &bebopVSNodelet::imageCallback, this );
   image_transport::ImageTransport it(m_nh);
@@ -103,7 +104,8 @@ void bebopVSNodelet::imageCallback( const sensor_msgs::ImageConstPtr &msg )
   cv::Mat img;
   int success = 0;
   try{
-      img=cv_bridge::toCvShare(msg,"bgr8")->image;
+      // img=cv_bridge::toCvShare(msg,"bgr8")->image;
+      img=cv_bridge::toCvCopy(msg,"bgr8")->image;
       success = 1;
   }catch (cv_bridge::Exception& e){
       NODELET_ERROR("Could not convert from '%s' to 'bgr8'.",
