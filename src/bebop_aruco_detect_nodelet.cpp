@@ -6,10 +6,6 @@
 #include <nodelet/nodelet.h>
 #include <pluginlib/class_list_macros.h>
 
-// #include <geometry_msgs/msg/pose.hpp>
-// #include <geometry_msgs/msg/pose_array.hpp>
-#include <geometry_msgs/Twist.h>
-#include <nav_msgs/Odometry.h> // nav_msgs/Odometry
 
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/image_encodings.h>
@@ -54,21 +50,11 @@ private:
 // Result of the matching operation
 
   //  configs
-  bool verbose = false;
 };
 
 PLUGINLIB_EXPORT_CLASS( bebopVSNodelet, nodelet::Nodelet )
 bebopVSNodelet::bebopVSNodelet(){}
-  // : bebop_has_been_setup( false )
-  // , m_cameraTilt( 0.0 )
-  // , m_cameraPan( 0.0 )
-  // , m_vec_ip_has_been_sorted( false )
-
-// {
-// }
-
 bebopVSNodelet::~bebopVSNodelet() {  }
-// bebopVSNodelet::~bebopVSNodelet() { m_task.kill(); }
 
 
 void bebopVSNodelet::onInit()
@@ -79,12 +65,8 @@ void bebopVSNodelet::onInit()
   NODELET_INFO( "%s", params_str.str().c_str() );
 
   //  CONFIGS
-  verbose = m_nh.param(std::string("verbose"), false);
+  params.load(m_nh);
   params.initArucos(m_nh);
-  // params.initArucos(m_nh, cv::aruco::DICT_6X6_250);
-  // params.initArucos(m_nh, cv::aruco::DICT_4X4_250);
-  // params.initArucos(m_nh, cv::aruco::DICT_7X7_250);
-  // params.initArucos(m_nh, cv::aruco::DICT_APRILTAG_36h11 );
 
   m_subImg   = m_nh.subscribe( "image_raw", 100, &bebopVSNodelet::imageCallback, this );
   image_transport::ImageTransport it(m_nh);
@@ -99,8 +81,7 @@ void bebopVSNodelet::onInit()
 void bebopVSNodelet::imageCallback( const sensor_msgs::ImageConstPtr &msg )
 {
 
-
-  // std::cout << "Vel(x,wz) = " << VelX << ", " << VelWz << " Someval="<<Someval << std::endl;
+  NODELET_INFO("Callback");
   cv::Mat img;
   int success = 0;
   try{
@@ -112,7 +93,6 @@ void bebopVSNodelet::imageCallback( const sensor_msgs::ImageConstPtr &msg )
                 msg->encoding.c_str());
   }
 
-  geometry_msgs::Twist out_cmd_pos;
   if (success )
   {
     std::vector<std::vector<cv::Point2f>> corners;
@@ -125,6 +105,27 @@ void bebopVSNodelet::imageCallback( const sensor_msgs::ImageConstPtr &msg )
                              params.parameters,
                              _rejected);
     cv::aruco::drawDetectedMarkers(img, corners, ids, cv::Scalar(0,255,0));
+
+    cv::Mat p;
+
+    for (int i = 0; i< corners.size(); i++)
+      for (int j = 0; j< corners[i].size(); j++)
+        p.push_back(corners[i][j]);
+    if (! p.empty())
+    {
+      cv::Mat _p;
+      _p = p.reshape(1);
+      std::cout << "---" << std::endl;
+      std::cout << p << std::endl;
+      // p.convertTo(_p,CV_64F);
+      std::cout << _p << std::endl;
+      camera_norm(params, _p);
+      std::cout << _p << std::endl;
+    }
+
+    // for (int i = 0; i< corners.size(); i++)
+    //   std::cout << corners[i] << std::endl ;
+
     /***************************** Prepare message */
 
     image_msg = cv_bridge::CvImage(std_msgs::Header(),

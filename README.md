@@ -86,7 +86,7 @@ Para terminar cualquier programa: `ctrl + c`
 ```bash
 # @ bebop_ws
 # Screen 1
-roslaunch bobop_aruco_detect bebop_servo_nodelet.launch
+roslaunch bebop_aruco_detect bebop_aruco_detect_nodelet.launch
 # Screen 2 (cámara)
 rosrun rqt_image_view rqt_image_view
 ```

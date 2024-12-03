@@ -1,9 +1,6 @@
 <launch>
   <arg name="namespace_bebop" default="bebop" />
   <arg name="ip" default="192.168.42.1" />
-  <arg name="verbose" default="false" />
-  <arg name="reference" default="$(find bebop_aruco_detect)/config/reference.png" />
-  <arg name="output" default="$(find bebop_aruco_detect)/output/data.dat" />
 
   <!-- Parameters for the drone -->
   <param name="/$(arg namespace_bebop)/bebop_nodelet/SpeedSettingsOutdoorOutdoor" type="int" value="0"/>
@@ -20,20 +17,12 @@
 
   <!-- ArUco detection -->
   <group ns="demo">
-    <param name="select" type="int" value="1"/>
-    <param name="verbose" type="bool" value="$(arg verbose)"/>
-    <param name="reference" value="$(arg reference)"/>
-    <param name="output" value="$(arg output)"/>
     <rosparam command="load" file="$(find bebop_aruco_detect)/config/params.yaml"/>
     <node pkg="nodelet"
           type="nodelet"
           name="bebop_aruco_detect_nodelet"
           args="load bebop_aruco_detect_nodelet /$(arg namespace_bebop)/bebop_nodelet_manager">
-      <remap from="cmd_vel" to="/$(arg namespace_bebop)/cmd_vel"/>
       <remap from="image_raw" to="/$(arg namespace_bebop)/image_raw"/>
-      <remap from="odom" to="/$(arg namespace_bebop)/odom"/>
-      <remap from="land" to="/$(arg namespace_bebop)/land"/>
-      <remap from="takeoff" to="/$(arg namespace_bebop)/takeoff"/>
     </node>
   </group>
 

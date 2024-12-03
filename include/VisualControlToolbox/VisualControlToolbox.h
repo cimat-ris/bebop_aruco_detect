@@ -64,8 +64,45 @@ typedef struct parameters {
     // Camera parameters
     cv::Mat K;
 
-    void initOrb()
+    void load(const ros::NodeHandle &nh)
     {
+        // Load intrinsic parameters
+        XmlRpc::XmlRpcValue kConfig;
+        K = cv::Mat(3,3, CV_64F, double(0));
+        if (nh.hasParam("camera_intrinsic_parameters"))
+        {
+            nh.getParam("camera_intrinsic_parameters", kConfig);
+            if (kConfig.getType() == XmlRpc::XmlRpcValue::TypeArray)
+            for (int i=0;i<9;i++)
+            {
+                std::ostringstream ostr;
+                ostr << kConfig[i];
+                std::istringstream istr(ostr.str());
+                istr >> K.at<double>(i/3,i%3);
+            }
+        }
+
+
+    }
+    void initOrb(const ros::NodeHandle &nh)
+    {
+        // Load error threshold parameter
+        feature_threshold=nh.param(std::string("feature_error_threshold"),
+                                   std::numeric_limits<double>::max());
+        // Load feature detector parameters
+        nfeatures=nh.param(std::string("nfeatures"),100);
+        scaleFactor=nh.param(std::string("scaleFactor"),1.2);
+        nlevels=nh.param(std::string("nlevels"),5);
+        edgeThreshold=nh.param(std::string("edgeThreshold"),15);
+        patchSize=nh.param(std::string("patchSize"),30);
+        fastThreshold=nh.param(std::string("fastThreshold"),20);
+        flann_ratio=nh.param(std::string("flann_ratio"),0.7);
+        if (scaleFactor <= 1.)
+        {
+            scaleFactor = 1.2;
+            ROS_INFO("Params scale factor over ride at 1.2 to avoid orb bug ");
+        }
+
         orb = cv::ORB::create(
         nfeatures,
         scaleFactor,
@@ -88,76 +125,73 @@ typedef struct parameters {
             nh.getParam("dictionary", dict_str);
             if(dict_str == std::string("4X4_50"))
                 dict = cv::aruco::DICT_4X4_50;
-            else if(dict_str == std::string("4X4_100 "))
+            else if(dict_str == std::string("4X4_100"))
                 dict = cv::aruco::DICT_4X4_100 ;
-            else if(dict_str == std::string("4X4_250 "))
+            else if(dict_str == std::string("4X4_250"))
                 dict = cv::aruco::DICT_4X4_250 ;
-            else if(dict_str == std::string("4X4_1000 "))
+            else if(dict_str == std::string("4X4_1000"))
                 dict = cv::aruco::DICT_4X4_1000 ;
-            else if(dict_str == std::string("5X5_50 "))
+            else if(dict_str == std::string("5X5_50"))
                 dict = cv::aruco::DICT_5X5_50 ;
-            else if(dict_str == std::string("5X5_100 "))
+            else if(dict_str == std::string("5X5_100"))
                 dict = cv::aruco::DICT_5X5_100 ;
-            else if(dict_str == std::string("5X5_250 "))
+            else if(dict_str == std::string("5X5_250"))
                 dict = cv::aruco::DICT_5X5_250 ;
-            else if(dict_str == std::string("5X5_1000 "))
+            else if(dict_str == std::string("5X5_1000"))
                 dict = cv::aruco::DICT_5X5_1000 ;
-            else if(dict_str == std::string("6X6_50 "))
+            else if(dict_str == std::string("6X6_50"))
                 dict = cv::aruco::DICT_6X6_50 ;
-            else if(dict_str == std::string("6X6_100 "))
+            else if(dict_str == std::string("6X6_100"))
                 dict = cv::aruco::DICT_6X6_100 ;
-            else if(dict_str == std::string("6X6_250 "))
+            else if(dict_str == std::string("6X6_250"))
                 dict = cv::aruco::DICT_6X6_250 ;
-            else if(dict_str == std::string("6X6_1000 "))
+            else if(dict_str == std::string("6X6_1000"))
                 dict = cv::aruco::DICT_6X6_1000 ;
-            else if(dict_str == std::string("7X7_50 "))
+            else if(dict_str == std::string("7X7_50"))
                 dict = cv::aruco::DICT_7X7_50 ;
-            else if(dict_str == std::string("7X7_100 "))
+            else if(dict_str == std::string("7X7_100"))
                 dict = cv::aruco::DICT_7X7_100 ;
-            else if(dict_str == std::string("7X7_250 "))
+            else if(dict_str == std::string("7X7_250"))
                 dict = cv::aruco::DICT_7X7_250 ;
-            else if(dict_str == std::string("7X7_1000 "))
+            else if(dict_str == std::string("7X7_1000"))
                 dict = cv::aruco::DICT_7X7_1000 ;
-            else if(dict_str == std::string("ARUCO_ORIGINAL "))
+            else if(dict_str == std::string("ARUCO_ORIGINAL"))
                 dict = cv::aruco::DICT_ARUCO_ORIGINAL ;
-            else if(dict_str == std::string("APRILTAG_16h5 "))
+            else if(dict_str == std::string("APRILTAG_16h5"))
                 dict = cv::aruco::DICT_APRILTAG_16h5 ;
-            else if(dict_str == std::string("APRILTAG_25h9 "))
+            else if(dict_str == std::string("APRILTAG_25h9"))
                 dict = cv::aruco::DICT_APRILTAG_25h9 ;
-            else if(dict_str == std::string("APRILTAG_36h10 "))
+            else if(dict_str == std::string("APRILTAG_36h10"))
                 dict = cv::aruco::DICT_APRILTAG_36h10 ;
-            else if(dict_str == std::string("APRILTAG_36h11 "))
+            else if(dict_str == std::string("APRILTAG_36h11"))
                 dict = cv::aruco::DICT_APRILTAG_36h11 ;
-            // if(dict_str == std::string("ARUCO_MIP_36h12"))
-            //     dict = cv::aruco::DICT_ARUCO_MIP_36h12;
             else
-                ROS_WARN("Incorrect ArUco Dictionary Selection");
+                ROS_WARN("[VC Tools] Incorrect ArUco Dictionary Selection");
         }
         dictionary = cv::aruco::getPredefinedDictionary(dict);
-
         //  Detection parameters
         parameters = cv::aruco::DetectorParameters::create();
         if(nh.hasParam("adaptiveThreshWinSizeMin"))
             nh.getParam("adaptiveThreshWinSizeMin", parameters->adaptiveThreshWinSizeMin);
-        else if(nh.hasParam("adaptiveThreshWinSizeMax"))
+        if(nh.hasParam("adaptiveThreshWinSizeMax"))
             nh.getParam("adaptiveThreshWinSizeMax", parameters->adaptiveThreshWinSizeMax);
-        else if(nh.hasParam("adaptiveThreshWinSizeStep"))
+        if(nh.hasParam("adaptiveThreshWinSizeStep"))
             nh.getParam("adaptiveThreshWinSizeStep", parameters->adaptiveThreshWinSizeStep);
-        else if(nh.hasParam("adaptiveThreshConstant"))
+        if(nh.hasParam("adaptiveThreshConstant"))
             nh.getParam("adaptiveThreshConstant", parameters->adaptiveThreshConstant);
-        else if(nh.hasParam("minMarkerPerimeterRate"))
+        if(nh.hasParam("minMarkerPerimeterRate"))
             nh.getParam("minMarkerPerimeterRate", parameters->minMarkerPerimeterRate);
-        else if(nh.hasParam("maxMarkerPerimeterRate"))
+        if(nh.hasParam("maxMarkerPerimeterRate"))
             nh.getParam("maxMarkerPerimeterRate", parameters->maxMarkerPerimeterRate);
-        else if(nh.hasParam("polygonalApproxAccuracyRate"))
+        if(nh.hasParam("polygonalApproxAccuracyRate"))
             nh.getParam("polygonalApproxAccuracyRate", parameters->polygonalApproxAccuracyRate);
-        else if(nh.hasParam("minCornerDistanceRate"))
+        if(nh.hasParam("minCornerDistanceRate"))
             nh.getParam("minCornerDistanceRate", parameters->minCornerDistanceRate);
-        else if(nh.hasParam("minDistanceToBorder"))
+        if(nh.hasParam("minDistanceToBorder"))
             nh.getParam("minDistanceToBorder", parameters->minDistanceToBorder);
-        else if(nh.hasParam("minMarkerDistanceRate"))
+        if(nh.hasParam("minMarkerDistanceRate"))
             nh.getParam("minMarkerDistanceRate", parameters->minMarkerDistanceRate);
-        else if(nh.hasParam("cornerRefinementMethod"))
+        if(nh.hasParam("cornerRefinementMethod"))
         {
             std::string method;
             nh.getParam("cornerRefinementMethod", method);
@@ -169,50 +203,53 @@ typedef struct parameters {
                 parameters->cornerRefinementMethod = cv::aruco::CORNER_REFINE_CONTOUR;
             else if (method == std::string("CORNER_REFINE_APRILTAG"))
                 parameters->cornerRefinementMethod = cv::aruco::CORNER_REFINE_APRILTAG;
-            ROS_INFO("[BEBOP2 ARUCO] Corner refinement method changed: %s", method.c_str());
+            ROS_INFO("[VS Tools] Corner refinement method changed: %s", method.c_str());
 
         }
-        else if(nh.hasParam("cornerRefinementWinSize"))
+        if(nh.hasParam("cornerRefinementWinSize"))
             nh.getParam("cornerRefinementWinSize", parameters->cornerRefinementWinSize);
-        else if(nh.hasParam("cornerRefinementMaxIterations"))
+        if(nh.hasParam("cornerRefinementMaxIterations"))
             nh.getParam("cornerRefinementMaxIterations", parameters->cornerRefinementMaxIterations);
-        else if(nh.hasParam("cornerRefinementMinAccuracy"))
+        if(nh.hasParam("cornerRefinementMinAccuracy"))
             nh.getParam("cornerRefinementMinAccuracy", parameters->cornerRefinementMinAccuracy);
-        else if(nh.hasParam("markerBorderBits"))
+        if(nh.hasParam("markerBorderBits"))
             nh.getParam("markerBorderBits", parameters->markerBorderBits);
-        else if(nh.hasParam("perspectiveRemovePixelPerCell"))
+        if(nh.hasParam("perspectiveRemovePixelPerCell"))
             nh.getParam("perspectiveRemovePixelPerCell", parameters->perspectiveRemovePixelPerCell);
-        else if(nh.hasParam("perspectiveRemoveIgnoredMarginPerCell"))
+        if(nh.hasParam("perspectiveRemoveIgnoredMarginPerCell"))
             nh.getParam("perspectiveRemoveIgnoredMarginPerCell", parameters->perspectiveRemoveIgnoredMarginPerCell);
-        else if(nh.hasParam("maxErroneousBitsInBorderRate"))
+        if(nh.hasParam("maxErroneousBitsInBorderRate"))
             nh.getParam("maxErroneousBitsInBorderRate", parameters->maxErroneousBitsInBorderRate);
-        else if(nh.hasParam("minOtsuStdDev"))
+        if(nh.hasParam("minOtsuStdDev"))
             nh.getParam("minOtsuStdDev", parameters->minOtsuStdDev);
-        else if(nh.hasParam("errorCorrectionRate"))
+        if(nh.hasParam("errorCorrectionRate"))
             nh.getParam("errorCorrectionRate", parameters->errorCorrectionRate);
-        else if(nh.hasParam("aprilTagMinClusterPixels"))
+        if(nh.hasParam("aprilTagMinClusterPixels"))
             nh.getParam("aprilTagMinClusterPixels", parameters->aprilTagMinClusterPixels);
-        else if(nh.hasParam("aprilTagMaxNmaxima"))
+        if(nh.hasParam("aprilTagMaxNmaxima"))
             nh.getParam("aprilTagMaxNmaxima", parameters->aprilTagMaxNmaxima);
-        else if(nh.hasParam("aprilTagCriticalRad"))
+        if(nh.hasParam("aprilTagCriticalRad"))
             nh.getParam("aprilTagCriticalRad", parameters->aprilTagCriticalRad);
-        else if(nh.hasParam("aprilTagMaxLineFitMse"))
+        if(nh.hasParam("aprilTagMaxLineFitMse"))
             nh.getParam("aprilTagMaxLineFitMse", parameters->aprilTagMaxLineFitMse);
-        else if(nh.hasParam("aprilTagMinWhiteBlackDiff"))
+        if(nh.hasParam("aprilTagMinWhiteBlackDiff"))
             nh.getParam("aprilTagMinWhiteBlackDiff", parameters->aprilTagMinWhiteBlackDiff);
-        else if(nh.hasParam("aprilTagDeglitch"))
+        if(nh.hasParam("aprilTagDeglitch"))
             nh.getParam("aprilTagDeglitch", parameters->aprilTagDeglitch);
-        else if(nh.hasParam("aprilTagQuadDecimate"))
+        if(nh.hasParam("aprilTagQuadDecimate"))
             nh.getParam("aprilTagQuadDecimate", parameters->aprilTagQuadDecimate);
-        else if(nh.hasParam("aprilTagQuadSigma"))
+        if(nh.hasParam("aprilTagQuadSigma"))
             nh.getParam("aprilTagQuadSigma", parameters->aprilTagQuadSigma);
-        else if(nh.hasParam("detectInvertedMarker"))
+        if(nh.hasParam("detectInvertedMarker"))
             nh.getParam("detectInvertedMarker", parameters->detectInvertedMarker);
 
-
+        ROS_INFO("[VC Toolbox] Param Win Min = %d", parameters->adaptiveThreshWinSizeMin);
+        ROS_INFO("[VC Toolbox] Param Win Max = %d", parameters->adaptiveThreshWinSizeMax);
     }
 
 } parameters;
+
+void camera_norm(const parameters & params, cv::Mat & P);
 
 //  Estructura de datos referente a los resultados
 //      de los emparejamientos de puntos y la homografía
@@ -222,6 +259,13 @@ typedef struct matching_result{
     cv::Mat p1;     // puntos de imagen (u,v) Referencia
     cv::Mat p2;     // puntos de imagen (u.v) Actual
     double mean_feature_error=1e10;
+
+    void camera_norm(const parameters & params)
+    {
+        vct::camera_norm(params, p1);
+        vct::camera_norm(params, p2);
+    }
+
 } matching_result;
 
 //  Estructura que contiene la información de
@@ -375,7 +419,6 @@ int compute_arucos(
     const desired_configuration & Desired_Configuration,
     matching_result& result)
 {
-    // ROS_INFO("INIT Copute ArUcos");
     //  Detect arucos
     std::vector<std::vector<cv::Point2f>> corners;
     std::vector<int> ids;
@@ -392,8 +435,6 @@ int compute_arucos(
     result.p2.release();
     img.copyTo(result.img_matches);
     int len = Desired_Configuration.arucos_ids.size();
-    // std::cout << "Desired ids = " << Desired_Configuration.arucos_ids[0] << std::endl << std::flush;
-    // std::cout << "[DEMO BEBOP2] N found ids = " << ids.size() << std::endl << std::flush;
 
     if (ids.size() < 1)
         return -1;
@@ -403,43 +444,32 @@ int compute_arucos(
         int j = find(Desired_Configuration.arucos_ids[i], ids);
         if (j >= 0 )
         {
-            // std::cout << "j = " << j << std::endl << std::flush;
-            // ROS_INFO("INIT Copute ArUcos: 1");
             //  Save to result
             result.p1.push_back(Desired_Configuration.arucos[i]);
             result.p2.push_back(corners[j]);
-            // std::cout << Desired_Configuration.arucos_ids[i]
-            // << " ?= " << ids[j] << std::endl << std::flush;
-            // ROS_INFO("INIT Copute ArUcos: 2");
         }
     }
     if (result.p1.empty())
         return -1;
-    // std::cout << "type = " << CV_64F << std::endl << std::flush;
-    // std::cout << "p1 = " <<result.p1 << std::endl << std::flush;
-    // std::cout << "p2 = " << result.p2.type() << std::endl << std::flush;
     cv::Mat tmp;
     tmp = result.p1.reshape(1);
     tmp.convertTo(result.p1,CV_64F);
     tmp = result.p2.reshape(1);
     tmp.convertTo(result.p2,CV_64F);
-// std::cout << "p1 = " <<result.p1.type() << std::endl << std::flush;
-    // std::cout << "p2 = " << result.p2.type() << std::endl << std::flush;
 
     /******    computing error to stop ********/
     result.mean_feature_error = norm(result.p1, result.p2)/((double)result.p1.rows);
 
+    // ROS_INFO("[VC Tools] |Error| = %e", result.mean_feature_error);
     // Draw reference
     cv::aruco::drawDetectedMarkers(result.img_matches,
                                     Desired_Configuration.arucos,
                                     Desired_Configuration.arucos_ids,
                                     cv::Scalar(0,0,255));
-    // ROS_INFO("INIT Copute ArUcos: 3");
     //  draw current
     cv::aruco::drawDetectedMarkers(result.img_matches,
                                     corners,
                                     ids,cv::Scalar(0,255,0));
-    // ROS_INFO("END Copute ArUcos");
     return 0;
 }
 //  Calcula los emparejamientos entre dos imágenes
@@ -455,29 +485,17 @@ int compute_descriptors(
     const desired_configuration & Desired_Configuration,
     matching_result& result)
 {
-    /*** kp and descriptors for current image ***/
     cv::Mat descriptors;
     std::vector<cv::KeyPoint> kp;
 
-    /*** Creatring ORB object ***/
-    // cv::Ptr<cv::ORB> orb = cv::ORB::create(
-    //     params.nfeatures,
-    //     params.scaleFactor,
-    //     params.nlevels,
-    //     params.edgeThreshold,
-    //     params.firstLevel,
-    //     params.WTA_K,
-    //     params.scoreType,
-    //     params.patchSize,
-    //     params.fastThreshold);
-
+    //  ORB detector
     params.orb->detect(img, kp);
     if (kp.size()==0)
         return -1;
     params.orb->compute(img, kp, descriptors);
 
 
-    /******* Using flann for matching ****************/
+    //  FLANN matcher
     cv::FlannBasedMatcher matcher(new cv::flann::LshIndexParams(20, 10, 2));
     std::vector<std::vector<cv::DMatch>> matches;
     matcher.knnMatch(
@@ -485,8 +503,7 @@ int compute_descriptors(
         descriptors,
         matches,2);
 
-    /********* Processing to get only goodmatches ****************/
-
+    //  Filter good matches
     std::vector<cv::DMatch> goodMatches;
     for(int i = 0; i < matches.size(); ++i) {
         if (matches[i][0].distance < matches[i][1].distance * params.flann_ratio)
@@ -495,9 +512,7 @@ int compute_descriptors(
     if (goodMatches.size()==0)
         return -1;
 
-    /*********** Getting descriptors *******************/
-
-    //-- transforming goodmatches to points
+    //  Convert
     result.p1.release();
     result.p2.release();
     result.p1 = cv::Mat(goodMatches.size(),2,CV_64F);
@@ -515,12 +530,12 @@ int compute_descriptors(
         tmp.copyTo(result.p2.row(i));
     }
 
-    /******    computing error ********/
+    //  ERROR
     cv::Mat a = cv::Mat(result.p1);
     cv::Mat b = cv::Mat(result.p2);
     result.mean_feature_error = norm(a,b)/((double)result.p1.rows);
 
-    /******* Draw matches ************/
+    //  DRAW
 
     result.img_matches = cv::Mat::zeros(img.rows, img.cols * 2, img.type());
     cv::drawMatches(
@@ -566,30 +581,49 @@ cv::Vec3f rotationMatrixToEulerAngles(const cv::Mat &R)
 //      sobre un objeto de sesultado
 //      TODO: hacer un metodo propio de vc_matching_result
 
-void camera_norm(const parameters & params,
-                       matching_result& result){
-        //  Normalización in situ
-
-    //  p1
-    result.p1.col(0) = result.p1.col(0)-params.K.at<double>(0,2);
-    result.p1.col(1) = result.p1.col(1)-params.K.at<double>(1,2);
-    result.p1.col(0) = result.p1.col(0).mul(1.0/params.K.at<double>(0,0));
-    result.p1.col(1) = result.p1.col(1).mul(1.0/params.K.at<double>(1,1));
-
-    //  p2
-    result.p2.col(0) = result.p2.col(0)-params.K.at<double>(0,2);
-    result.p2.col(1) = result.p2.col(1)-params.K.at<double>(1,2);
-    result.p2.col(0) = result.p2.col(0).mul(1.0/params.K.at<double>(0,0));
-    result.p2.col(1) = result.p2.col(1).mul(1.0/params.K.at<double>(1,1));
-
-
-    return;
-}
+// void camera_norm(const parameters & params,
+//                        matching_result& result){
+//         //  Normalización in situ
+//
+//     //  p1
+//     result.p1.col(0) = result.p1.col(0)-params.K.at<double>(0,2);
+//     result.p1.col(1) = result.p1.col(1)-params.K.at<double>(1,2);
+//     result.p1.col(0) = result.p1.col(0).mul(1.0/params.K.at<double>(0,0));
+//     result.p1.col(1) = result.p1.col(1).mul(1.0/params.K.at<double>(1,1));
+//
+//     //  p2
+//     result.p2.col(0) = result.p2.col(0)-params.K.at<double>(0,2);
+//     result.p2.col(1) = result.p2.col(1)-params.K.at<double>(1,2);
+//     result.p2.col(0) = result.p2.col(0).mul(1.0/params.K.at<double>(0,0));
+//     result.p2.col(1) = result.p2.col(1).mul(1.0/params.K.at<double>(1,1));
+//
+//
+//     return;
+// }
 void camera_norm(const parameters & params,
                        cv::Mat & P){
         //  Normalización in situ
 
+    cv::Mat _K;
+    params.K.convertTo(_K, P.type());
+
+    // std::cout << _K << std::endl << std::flush;
+    // std::cout << _K.type() << std::endl << std::flush;
+    // std::cout << _K.rows << std::endl << std::flush;
+    // std::cout << _K.cols << std::endl << std::flush;
+    // std::cout << params.K << std::endl << std::flush;
+    std::cout << params.K.type() << std::endl << std::flush;
+    std::cout << params.K.rows << std::endl << std::flush;
+    std::cout << params.K.cols << std::endl << std::flush;
+    std::cout << P << std::endl << std::flush;
+    std::cout << P.type() << std::endl << std::flush;
+    std::cout << P.rows << std::endl << std::flush;
+    std::cout << P.cols << std::endl << std::flush;
     //  p1
+    // P.col(0) = P.col(0)-_K.at<double>(0,2);
+    // P.col(1) = P.col(1)-_K.at<double>(1,2);
+    // P.col(0) = P.col(0).mul(1.0/_K.at<double>(0,0));
+    // P.col(1) = P.col(1).mul(1.0/_K.at<double>(1,1));
     P.col(0) = P.col(0)-params.K.at<double>(0,2);
     P.col(1) = P.col(1)-params.K.at<double>(1,2);
     P.col(0) = P.col(0).mul(1.0/params.K.at<double>(0,0));
@@ -601,8 +635,6 @@ void camera_norm(const parameters & params,
 
 //  Calcula la matriz de interacción para los puntos actuales
 //      de un objeto de resultado.
-//      TODO: Adaptar al caso de cámara forntal y nadir
-//      TODO: Z estimada en forma de vector.
 cv::Mat interaction_Mat(cv::Mat & p, cv::Mat & Z)
 {
     int n = p.rows;
@@ -614,49 +646,22 @@ cv::Mat interaction_Mat(cv::Mat & p, cv::Mat & Z)
         return cv::Mat();
     }
 
-    // //  BEGIN 4 DOF
-    // //     cv::Mat L= cv::Mat::zeros(n,12,CV_64F) ;
-    // cv::Mat L= cv::Mat::zeros(n,8,type) ;
-    //
-    // //  Calculos
-    // //   -1/Z
-    // //     L.col(0) = - cv::Mat::ones(n,1,CV_64F)/Z;
-    // L.col(0) = - cv::Mat::ones(n,1,type)/Z;
-    // //     L.col(1) = 0
-    // //  p[0,:]/Z
-    // L.col(2) = p.col(0)/Z;
-    // //  p[1,:]
-    // p.col(1).copyTo(L.col(3));
-    // //     L.col(4) = 0
-    // //  -1/Z
-    // L.col(0).copyTo(L.col(5));
-    // //  p[1,:]/Z
-    // L.col(6) = p.col(1)/Z;
-    // //  -p[0,:]
-    // L.col(7) = -1.0 * p.col(0);
-    // //  END 4 DOF
-    //  BEGIN 6 DOF
     //     cv::Mat L= cv::Mat::zeros(n,12,CV_64F) ;
     cv::Mat L= cv::Mat::zeros(n,12,type) ;
 
     //  Calculos
     //   -1/Z
     //     L.col(0) = - cv::Mat::ones(n,1,CV_64F)/Z;
-    // ROS_INFO("A");
     L.col(0) = - cv::Mat::ones(n,1,type)/Z;
     //     L.col(1) = 0
     //  p[0,:]/Z
-    // ROS_INFO("B");
     L.col(2) = p.col(0)/Z;
     //  p[0,:] * p[1,:]
-    // ROS_INFO("C");
     L.col(3) = p.col(0).mul(p.col(1)) ;
     //  -(1 + p[0,:]^2)
-    // ROS_INFO("D");
     L.col(4) = -1. * (cv::Mat::ones(n,1,type)- p.col(0).mul(p.col(0))) ;
     //  p[1,:]
     p.col(1).copyTo(L.col(5));
-    // ROS_INFO("E");
     //     L.col(6) = 0
     //  -1/Z
     L.col(0).copyTo(L.col(7));
@@ -674,18 +679,12 @@ cv::Mat interaction_Mat(cv::Mat & p, cv::Mat & Z)
 
 //  Calcula la Pseudo Inversa Moore Penrose de L
 //      Calcula el determinante en el proceso
-//  Precaución:
-//      Si det < 10^-9 entonces regresa solo L^T
 cv::Mat Moore_Penrose_PInv(cv::Mat L,double & det)
 {
     cv::Mat Lt = L.t();
     cv::Mat Ls = Lt*L;
     det = cv::determinant(Ls);
-    if (det > 1e-14){
-        return Ls.inv()*Lt;
-    }
-
-    return Lt;
+    return Ls.inv()*Lt;
 };
 
 //  Calcula la Homografía entre
@@ -702,38 +701,25 @@ int compute_homography(
     const desired_configuration & Desired_Configuration,
     matching_result& result)
 {
-
-    /* keypoints and descriptors */
+    //  TODO: revisar si hace falta normalizar
     cv::Mat descriptors;
     std::vector<cv::KeyPoint> kp;
 
-    /*** Creatring ORB object ***/
-    // cv::Ptr<cv::ORB> orb = cv::ORB::create(
-    //     params.nfeatures,
-    //     params.scaleFactor,
-    //     params.nlevels,
-    //     params.edgeThreshold,
-    //     params.firstLevel,
-    //     params.WTA_K,
-    //     params.scoreType,
-    //     params.patchSize,
-    //     params.fastThreshold);
-
+    //  ORB Detect
     params.orb->detect(img, kp);
     if (kp.size()==0)
         return -1;
     params.orb->compute(img, kp, descriptors);
 
 
-    /******************** Using flann for matching *****************/
+    //  FLANN matcher
     cv::FlannBasedMatcher matcher(new cv::flann::LshIndexParams(20, 10, 2));
     std::vector<std::vector<cv::DMatch>> matches;
     matcher.knnMatch(
         Desired_Configuration.descriptors,
         descriptors,matches,2);
 
-    /************** Processing to get only goodmatches ***********/
-
+    //  Filter goodmatches
     std::vector<cv::DMatch> goodMatches;
     for(int i = 0; i < matches.size(); ++i) {
         if (matches[i][0].distance < matches[i][1].distance * params.flann_ratio)
@@ -742,9 +728,7 @@ int compute_homography(
     if (goodMatches.size()==0)
         return -1;
 
-    /******************************* Findig homography **************/
-
-    //-- transforming goodmatches to points
+    //  Convert
     result.p1.release();
     result.p2.release();
     result.p1 = cv::Mat(goodMatches.size(),2,CV_64F);
@@ -763,17 +747,19 @@ int compute_homography(
         tmp.copyTo(result.p2.row(i));
     }
 
-    //computing error
+    //  ERROR
     result.mean_feature_error = norm(result.p1,result.p2)/(double)result.p1.rows;
     // Finding homography
     cv::Mat a ,b;
     result.p1.convertTo(a,CV_32FC2);
     result.p2.convertTo(b,CV_32FC2);
+
+    //  Homography
     result.H = cv::findHomography(a,b ,cv::RANSAC, 0.5);
     if (result.H.rows==0)
         return -1;
-    /************************* Draw matches ******************/
 
+    //  DRAW
     result.img_matches = cv::Mat::zeros(img.rows, img.cols * 2, img.type());
     cv::drawMatches(
         Desired_Configuration.img,
@@ -842,41 +828,6 @@ class state {
     //  Asumes that the State has been mapped to the global frame of reference
     std::pair<Eigen::VectorXd,float> update()
     {
-        //  Change from local to global
-        //  TODO:  generalizar
-        //  Assume Pitch = roll = 0
-        // double gVyaw, gVx, gVy, gVz;
-        // cv::softdouble _yaw(this->Yaw-(CV_PI/2.));
-        // gVx = this->Vx *cv::cos(_yaw) + this->Vy *cv::sin(_yaw) ;
-        // gVy = this->Vx *cv::sin(_yaw) -this->Vy *cv::cos(_yaw) ;
-        //
-        // gVyaw = - this->Vyaw;
-        // gVz = - this->Vz;
-        //
-        // std::cout << "Global = " << gVx << ", " <<
-        // gVy << ", " <<
-        // gVz << ", " <<
-        // gVyaw << std::endl << std::flush;
-
-        // Integrating
-        //  V1 from ground thruth
-        // double _X = this->X + this->Kv*gVx*this->dt;
-        // double _Y = this->Y + this->Kv*gVy*this->dt;
-        // double _Z = this->Z + this->Kv*gVz*this->dt;
-        // double _Yaw = this->Yaw + this->Kw*gVyaw*this->dt;
-        // std::cout << "Real State = " << this -> X << ", " <<this -> Y << ", "
-        // <<  this -> Z << ", " <<  this -> Yaw << ", "
-        // << std::endl << std::flush;
-        // std::cout << "Next State = " <<  _X << ", " << _Y << ", "
-        // <<   _Z << ", " <<   _Yaw << ", "
-        // << std::endl << std::flush;
-        // Eigen::VectorXd position;
-        // position.resize(3);
-        // position(0) = (float) _X;
-        // position(1) = (float) _Y;
-        // position(2) = (float) _Z;
-        //
-        // return std::make_pair(position, (float)_Yaw);
 
         //  V2 From simulated positions
         X = X + Kv*Vx*dt;
@@ -895,34 +846,35 @@ class state {
 
     void load(const ros::NodeHandle &nh)
     {
-        // Load intrinsic parameters
-        XmlRpc::XmlRpcValue kConfig;
-        this->params.K = cv::Mat(3,3, CV_64F, double(0));
-        if (nh.hasParam("camera_intrinsic_parameters")) {
-            nh.getParam("camera_intrinsic_parameters", kConfig);
-            if (kConfig.getType() == XmlRpc::XmlRpcValue::TypeArray)
-            for (int i=0;i<9;i++) {
-                std::ostringstream ostr;
-                ostr << kConfig[i];
-                std::istringstream istr(ostr.str());
-                istr >> this->params.K.at<double>(i/3,i%3);
-            }
-        }
-        // Load error threshold parameter
-        this->params.feature_threshold=nh.param(std::string("feature_error_threshold"),std::numeric_limits<double>::max());
-        // Load feature detector parameters
-        this->params.nfeatures=nh.param(std::string("nfeatures"),100);
-        this->params.scaleFactor=nh.param(std::string("scaleFactor"),1.2);
-        this->params.nlevels=nh.param(std::string("nlevels"),5);
-        this->params.edgeThreshold=nh.param(std::string("edgeThreshold"),15);
-        this->params.patchSize=nh.param(std::string("patchSize"),30);
-        this->params.fastThreshold=nh.param(std::string("fastThreshold"),20);
-        this->params.flann_ratio=nh.param(std::string("flann_ratio"),0.7);
-        if (this->params.scaleFactor <= 1.)
-        {
-            this->params.scaleFactor = 1.2;
-            ROS_INFO("Params scale factor over ride at 1.2 to avoid orb bug ");
-        }
+        // // Load intrinsic parameters
+        // XmlRpc::XmlRpcValue kConfig;
+        // this->params.K = cv::Mat(3,3, CV_64F, double(0));
+        // if (nh.hasParam("camera_intrinsic_parameters")) {
+        //     nh.getParam("camera_intrinsic_parameters", kConfig);
+        //     if (kConfig.getType() == XmlRpc::XmlRpcValue::TypeArray)
+        //     for (int i=0;i<9;i++) {
+        //         std::ostringstream ostr;
+        //         ostr << kConfig[i];
+        //         std::istringstream istr(ostr.str());
+        //         istr >> this->params.K.at<double>(i/3,i%3);
+        //     }
+        // }
+        // // Load error threshold parameter
+        // this->params.feature_threshold=nh.param(std::string("feature_error_threshold"),std::numeric_limits<double>::max());
+        // // Load feature detector parameters
+        // this->params.nfeatures=nh.param(std::string("nfeatures"),100);
+        // this->params.scaleFactor=nh.param(std::string("scaleFactor"),1.2);
+        // this->params.nlevels=nh.param(std::string("nlevels"),5);
+        // this->params.edgeThreshold=nh.param(std::string("edgeThreshold"),15);
+        // this->params.patchSize=nh.param(std::string("patchSize"),30);
+        // this->params.fastThreshold=nh.param(std::string("fastThreshold"),20);
+        // this->params.flann_ratio=nh.param(std::string("flann_ratio"),0.7);
+        // if (this->params.scaleFactor <= 1.)
+        // {
+        //     this->params.scaleFactor = 1.2;
+        //     ROS_INFO("Params scale factor over ride at 1.2 to avoid orb bug ");
+        // }
+        params.load(nh);
         // Load gain parameters
         this->Kv=nh.param(std::string("gain_v"),0.0);
         this->Kw=nh.param(std::string("gain_w"),0.0);
@@ -966,15 +918,12 @@ class state {
     };
 
 };  //  STATE
-// }// vct namespace
 
 
 ////////////////////////////////////////////////////////////////////////////
 //  CONTROLLERS
 ////////////////////////////////////////////////////////////////////////////
 
-//  TODO: propuesta: pasar los controladores dentro del namespace
-//          que se defina el proceso de selección de control en el nodo
 //  Controllers
 
 // int homography(cv::Mat img,
@@ -991,40 +940,35 @@ class state {
 int IBVS(state & state,
             matching_result & Matching_result)
 {
-    // ROS_INFO("INIT IBVS");
     //  Normalización in situ
-    camera_norm(state.params, Matching_result);
+    // camera_norm(state.params, Matching_result);
+    Matching_result.camera_norm(state.params);
 
     //  Error
     cv::Mat err = Matching_result.p2-Matching_result.p1;
-    // std::cout << err <<  std::endl << std::flush;
-    //  estimación de Z
-    // err.col(1) *= -1.;
 
     int n = Matching_result.p2.rows;
     int type = Matching_result.p2.type();
     cv::Mat Z = cv::Mat::ones(n,1,type);
     Z = state.Z * Z;
 
-    // std::cout << "[IBVS] n = " << n << std::endl << std::flush ;
     //  L = M_{s_i}
     cv::Mat L = interaction_Mat(Matching_result.p2,Z);
     if (L.empty())
         return -1;
-    // std::cout << "L = " << L << std::endl << std::flush ;
     //  L = L^{-1}
     double det=0.0;
     L = Moore_Penrose_PInv(L,det);
-    if (det < 1e-6)
+    if (det < 1e-13)
+    {
+        ROS_WARN("[VC Tools] L = %e", det);
         return -1;
+    }
 
     //  U = L^{-1} e
     cv::Mat U = -1. *  L*err.reshape(1,L.cols);
-    // std::cout << "Control = " << U << std::endl << std::flush;
 
-
-    /**********Updating velocities in the axis*/
-    //velocities from homography decomposition
+    //  UPDATE
     // U = cv::Mat(U,CV_32F); // para generalizar el tipo de cariable
     state.Vx += (double) U.at<double>(0,0);
     state.Vy += (double) U.at<double>(1,0);
