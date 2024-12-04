@@ -74,7 +74,7 @@ source ~/.bashrc
 #   INSTALLATION
 ```bash
 cd ~/catkin_ws/src
-git clone git@github.com:cimat-ris/bobop_aruco_detect.git
+git clone git@github.com:cimat-ris/bebop_aruco_detect.git
 cd ~/catkin_ws
 catkin build bobop_aruco_detect
 ```
