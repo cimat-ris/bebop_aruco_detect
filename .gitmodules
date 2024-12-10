@@ -1,0 +1,3 @@
+[submodule "include/VisualControlToolbox"]
+	path = include/VisualControlToolbox
+	url = git@github.com:cimat-ris/VisualControlToolbox.git
